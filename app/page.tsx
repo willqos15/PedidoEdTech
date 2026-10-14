@@ -1,10 +1,7 @@
 "use client";
-
 import { useState } from "react";
-
 import InputContext from "./components/InputContext";
 import Resultado from "./components/Resultado";
-
 import { Frase } from "@/lib/types";
 import BtnGerarApp from "./components/BtnGerarApp";
 
