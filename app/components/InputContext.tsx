@@ -50,27 +50,22 @@ export default function InputContext({
   }
 
   return (
-    <main className="mx-auto w-full max-w-3xl px-4 py-8 sm:px-6 lg:py-12">
-      <div className="rounded-xl border border-zinc-200 bg-white shadow-sm">
+    <main className="mx-auto w-full max-w-3xl px-4 py-2 sm:px-6 ">
+      <div className="rounded-xl">
         {/* Cabeçalho */}
-        <div className="border-b border-zinc-200 px-5 py-5 sm:px-6">
+        <div className="border-b border-zinc-200">
           <h1 className="text-xl font-semibold text-zinc-900 sm:text-2xl">
-            IA Educacional
+            Gere com IA
           </h1>
 
           <p className="mt-1.5 text-sm leading-6 text-zinc-500">
-            Gere conteúdo educacional estruturado a partir de uma descrição.
+            Digite o tema do conteúdo da sua disciplina:
           </p>
         </div>
 
         {/* Formulário */}
-        <div className="p-5 sm:p-6">
-          <label
-            htmlFor="prompt"
-            className="mb-2 block text-sm font-medium text-zinc-700"
-          >
-            O que você quer gerar?
-          </label>
+        <div className="pt-2">
+
 
           <textarea
             id="prompt"
@@ -82,15 +77,13 @@ export default function InputContext({
           />
 
           <div className="mt-4 flex flex-col-reverse gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <span className="text-xs text-zinc-400">
-              Descreva o conteúdo que deseja gerar.
-            </span>
+
 
             <button
               type="button"
               onClick={gerar}
               disabled={carregando || !prompt.trim()}
-              className="w-full rounded-lg bg-zinc-900 px-5 py-2.5 text-sm font-medium text-white transition hover:bg-zinc-800 disabled:cursor-not-allowed disabled:bg-zinc-300 sm:w-auto"
+              className="w-full rounded-lg bg-zinc-900 px-5 py-2.5 text-sm font-medium text-white transition hover:bg-zinc-800 disabled:cursor-not-allowed disabled:bg-zinc-300 "
             >
               {carregando ? "Gerando..." : "Gerar conteúdo"}
             </button>

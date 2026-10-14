@@ -18,10 +18,11 @@ interface Conteudo {
 
 interface GerarAplicativoProps {
   conteudos: Conteudo[];
+  client: string;
 }
 
 export default function BtnGerarApp({
-  conteudos,
+  conteudos, client
 }: GerarAplicativoProps) {
   const [carregando, setCarregando] = useState(false);
   const [generationId, setGenerationId] = useState<string | null>(null);
@@ -29,31 +30,31 @@ export default function BtnGerarApp({
   const [downloadUrl, setDownloadUrl] = useState<string | null>(null);
 
 
-  
-const saveFile = async () => {
-  if (!downloadUrl) return;
 
-  try {
-    const showSaveFilePicker = (
-      window as Window & {
-        showSaveFilePicker?: (options: {
-          suggestedName: string;
-          types: {
-            description: string;
-            accept: Record<string, string[]>;
-          }[];
-        }) => Promise<{
-          createWritable: () => Promise<{
-            write: (data: Blob) => Promise<void>;
-            close: () => Promise<void>;
+  const saveFile = async () => {
+    if (!downloadUrl) return;
+
+    try {
+      const showSaveFilePicker = (
+        window as Window & {
+          showSaveFilePicker?: (options: {
+            suggestedName: string;
+            types: {
+              description: string;
+              accept: Record<string, string[]>;
+            }[];
+          }) => Promise<{
+            createWritable: () => Promise<{
+              write: (data: Blob) => Promise<void>;
+              close: () => Promise<void>;
+            }>;
           }>;
-        }>;
-      }
-    ).showSaveFilePicker;
+        }
+      ).showSaveFilePicker;
 
-    // Abrir "Salvar como" diretamente no clique, antes do fetch.
-    const handlePromise = showSaveFilePicker
-      ? showSaveFilePicker({
+      // Abrir "Salvar como" diretamente no clique, antes do fetch.
+      const handlePromise = showSaveFilePicker
+        ? showSaveFilePicker({
           suggestedName: "EdTech.html",
           types: [
             {
@@ -62,45 +63,45 @@ const saveFile = async () => {
             },
           ],
         })
-      : null;
+        : null;
 
-    const response = await fetch(downloadUrl);
+      const response = await fetch(downloadUrl);
 
-    if (!response.ok) {
-      throw new Error("Não foi possível baixar o HTML.");
+      if (!response.ok) {
+        throw new Error("Não foi possível baixar o arquivo.");
+      }
+
+      const blob = await response.blob();
+
+      if (handlePromise) {
+        const handle = await handlePromise;
+        const writable = await handle.createWritable();
+
+        await writable.write(blob);
+        await writable.close();
+
+        setMensagem("Arquivo salvo com sucesso!");
+      } else {
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+
+        link.href = url;
+        link.download = "EdTech.html";
+        link.click();
+
+        setTimeout(() => URL.revokeObjectURL(url), 1000);
+        setMensagem("Download iniciado!");
+      }
+    } catch (error) {
+      if (error instanceof Error && error.name === "AbortError") return;
+
+      setMensagem(
+        error instanceof Error
+          ? error.message
+          : "Erro ao salvar o arquivo."
+      );
     }
-
-    const blob = await response.blob();
-
-    if (handlePromise) {
-      const handle = await handlePromise;
-      const writable = await handle.createWritable();
-
-      await writable.write(blob);
-      await writable.close();
-
-      setMensagem("Arquivo salvo com sucesso!");
-    } else {
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement("a");
-
-      link.href = url;
-      link.download = "EdTech.html";
-      link.click();
-
-      setTimeout(() => URL.revokeObjectURL(url), 1000);
-      setMensagem("Download iniciado!");
-    }
-  } catch (error) {
-    if (error instanceof Error && error.name === "AbortError") return;
-
-    setMensagem(
-      error instanceof Error
-        ? error.message
-        : "Erro ao salvar o HTML."
-    );
-  }
-};
+  };
 
 
 
@@ -117,7 +118,10 @@ const saveFile = async () => {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ conteudos }),
+        body: JSON.stringify({
+          client: client.trim(),
+          conteudos,
+        }),
       });
 
       const data = await response.json();
@@ -152,14 +156,14 @@ const saveFile = async () => {
           statusData.status === "completed"
         ) {
           if (statusData.conclusion === "success") {
-            setMensagem("HTML gerado com sucesso!");
+            setMensagem("Arquivo gerado com sucesso!");
 
             const url = `/api/build/download?generationId=${encodeURIComponent(id)}`;
 
-            console.log("URL de download:", url);
+            console.log("Link de download:", url);
             setDownloadUrl(url);
           } else {
-            setMensagem("O build falhou. Consulte os logs do GitHub Actions.");
+            setMensagem("O salvamento do arquivo falhou.");
           }
 
           return;
@@ -167,13 +171,13 @@ const saveFile = async () => {
 
         setMensagem(
           statusData.status === "queued"
-            ? "Aguardando o início do build..."
-            : "Gerando HTML... Isso pode levar alguns minutos."
+            ? "Preparando..."
+            : "Gerando arquivo... Isso pode levar alguns minutos."
         );
       }
 
       setMensagem(
-        "A geração ainda está em andamento. Consulte o GitHub Actions para acompanhar."
+        "A geração ainda está em andamento."
       );
     } catch (error) {
       setMensagem(
@@ -193,10 +197,31 @@ const saveFile = async () => {
         type="button"
         onClick={gerarAplicativo}
         disabled={carregando}
-        className="rounded-lg bg-zinc-900 px-5 py-2.5 text-sm font-medium text-white transition hover:bg-zinc-800 disabled:cursor-not-allowed disabled:opacity-50"
+        className="rounded-lg w-full bg-zinc-900 px-5 py-2.5 text-sm font-medium text-white transition hover:bg-zinc-800 disabled:cursor-not-allowed disabled:opacity-50"
       >
         {carregando ? "Iniciando geração..." : "Gerar aplicativo"}
       </button>
+
+
+      {/* {generationId && (
+        <p className="break-all text-center text-xs text-zinc-500">
+          ID da geração: {generationId}
+        </p>
+      )} */}
+
+{downloadUrl && (
+  <a
+    href={`https://wa.me/5593991878598?text=${encodeURIComponent(
+    `Olá, sou ${client}! Meu aplicativo EdTechPalavras foi gerado. Gostaria de receber o arquivo.`
+    )}`}
+    target="_blank"
+    rel="noopener noreferrer"
+    className="w-full rounded-lg bg-green-600 px-5 py-2.5 text-center text-sm font-medium text-white transition hover:bg-green-700"
+  >
+    Solicitar arquivo
+  </a>
+)}
+
 
       {mensagem && (
         <p role="status" className="text-center text-sm text-zinc-600">
@@ -204,25 +229,18 @@ const saveFile = async () => {
         </p>
       )}
 
-      {generationId && (
-        <p className="break-all text-center text-xs text-zinc-500">
-          ID da geração: {generationId}
-        </p>
-      )}
 
+{/* 
       {downloadUrl && (
+        <button
+          type="button"
+          onClick={saveFile}
+          className="inline-flex items-center justify-center gap-2 rounded-xl bg-green-600 px-6 py-3 text-sm font-semibold text-white shadow-md shadow-green-600/20 transition-all duration-200 hover:-translate-y-0.5 hover:bg-green-700 hover:shadow-lg hover:shadow-green-700/25 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-500 focus-visible:ring-offset-2 active:translate-y-0"
+        >
 
-        
-
-  <button
-    type="button"
-    onClick={saveFile}
-    className="inline-flex items-center justify-center gap-2 rounded-xl bg-green-600 px-6 py-3 text-sm font-semibold text-white shadow-md shadow-green-600/20 transition-all duration-200 hover:-translate-y-0.5 hover:bg-green-700 hover:shadow-lg hover:shadow-green-700/25 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-500 focus-visible:ring-offset-2 active:translate-y-0"
-  >
-
-    Salvar HTML
-  </button>
-)}
+          Salvar HTML
+        </button>
+      )} */}
 
 
 

@@ -4,7 +4,7 @@ import { NextResponse } from "next/server";
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { conteudos } = body;
+    const { conteudos, client } = body;
 
     if (!Array.isArray(conteudos) || conteudos.length === 0) {
       return NextResponse.json(
@@ -44,7 +44,10 @@ export async function POST(request: Request) {
           ref,
           inputs: {
             generation_id: generationId,
-            payload: JSON.stringify(conteudos),
+            payload: JSON.stringify({
+              client: typeof client === "string" ? client.trim() : "",
+              data: conteudos,
+            }),
           },
         }),
         cache: "no-store",
