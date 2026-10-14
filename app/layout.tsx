@@ -14,7 +14,7 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: "Meu EdTech",
-  description: "Gerados de arquivos EdTech Palavras",
+  description: "Gerador de arquivos EdTech Palavras",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
