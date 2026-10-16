@@ -1,5 +1,6 @@
 
 import { NextResponse } from "next/server";
+import { chamarWorker } from "@/lib/cloudflare";
 
 export async function GET(request: Request) {
   const generationId = new URL(request.url).searchParams.get(
@@ -27,7 +28,7 @@ export async function GET(request: Request) {
 
   try {
     const response = await fetch(
-      `https://api.github.com/repos/${owner}/${repo}/actions/workflows/${workflow}/runs?per_page=20`,
+      `https://api.github.com/repos/${owner}/${repo}/actions/workflows/${workflow}/runs?per_page=100`,
       {
         headers: {
           Accept: "application/vnd.github+json",
@@ -39,8 +40,6 @@ export async function GET(request: Request) {
     );
 
     if (!response.ok) {
-      console.error("Erro ao consultar workflow:", response.status);
-
       return NextResponse.json(
         { error: "Não foi possível consultar o GitHub Actions." },
         { status: 502 }
@@ -49,20 +48,15 @@ export async function GET(request: Request) {
 
     const data = await response.json();
 
-    console.log(
-  "Execuções encontradas:",
-  data.workflow_runs.map(
-    (item: { display_title: string; status: string }) => ({
-      title: item.display_title,
-      status: item.status,
-    })
-  )
-);
-
     const run = data.workflow_runs.find(
-  (item: { display_title: string }) =>
-    item.display_title === `Build HTML ${generationId}`
-);
+      (item: {
+        display_title: string;
+        status: string;
+        conclusion: string | null;
+        html_url: string;
+        id: number;
+      }) => item.display_title === `Build HTML ${generationId}`
+    );
 
     if (!run) {
       return NextResponse.json({
@@ -72,13 +66,53 @@ export async function GET(request: Request) {
       });
     }
 
-    
+
+    let saldoAtualizado: {
+  available: number;
+  max_generations: number;
+  used_generations: number;
+  reserved_generations: number;
+} | null = null;
+
+    // 1. Traduzir o resultado do GitHub para o Worker.
+    if (run.status === "completed") {
+  const finalStatus =
+    run.conclusion === "success" ? "success" : "failed";
+
+  const finalizacao = await chamarWorker("/generations/finish", {
+    generation_id: generationId,
+    status: finalStatus,
+  });
+
+  if (
+    finalizacao.status >= 400 ||
+    typeof finalizacao.dados.available !== "number" ||
+    typeof finalizacao.dados.max_generations !== "number"
+  ) {
+    console.error("Falha ao finalizar geração:", finalizacao.dados);
+
+    return NextResponse.json(
+      {
+        error: "Build concluído, mas não foi possível confirmar o saldo.",
+      },
+      { status: 502 }
+    );
+  }
+
+  saldoAtualizado = {
+    available: finalizacao.dados.available,
+    max_generations: finalizacao.dados.max_generations,
+    used_generations: finalizacao.dados.used_generations,
+    reserved_generations: finalizacao.dados.reserved_generations,
+  };
+}
 
     return NextResponse.json({
       status: run.status,
       conclusion: run.conclusion,
       htmlUrl: run.html_url,
       runId: run.id,
+      saldo: saldoAtualizado,
       message:
         run.status === "completed"
           ? run.conclusion === "success"

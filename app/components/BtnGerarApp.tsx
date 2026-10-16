@@ -16,14 +16,23 @@ interface Conteudo {
   frases: Frase[];
 }
 
+
 interface GerarAplicativoProps {
   conteudos: Conteudo[];
   client: string;
+  codigoLicenca: string;
+  onSaldoAtualizado: (disponiveis: number, total: number) => void;
 }
 
+
+
 export default function BtnGerarApp({
-  conteudos, client
+  conteudos,
+  client,
+  codigoLicenca,
+  onSaldoAtualizado,
 }: GerarAplicativoProps) {
+
   const [carregando, setCarregando] = useState(false);
   const [generationId, setGenerationId] = useState<string | null>(null);
   const [mensagem, setMensagem] = useState("");
@@ -31,40 +40,11 @@ export default function BtnGerarApp({
 
 
 
+
   const saveFile = async () => {
     if (!downloadUrl) return;
 
     try {
-      const showSaveFilePicker = (
-        window as Window & {
-          showSaveFilePicker?: (options: {
-            suggestedName: string;
-            types: {
-              description: string;
-              accept: Record<string, string[]>;
-            }[];
-          }) => Promise<{
-            createWritable: () => Promise<{
-              write: (data: Blob) => Promise<void>;
-              close: () => Promise<void>;
-            }>;
-          }>;
-        }
-      ).showSaveFilePicker;
-
-      // Abrir "Salvar como" diretamente no clique, antes do fetch.
-      const handlePromise = showSaveFilePicker
-        ? showSaveFilePicker({
-          suggestedName: "EdTech.html",
-          types: [
-            {
-              description: "Arquivo HTML",
-              accept: { "text/html": [".html"] },
-            },
-          ],
-        })
-        : null;
-
       const response = await fetch(downloadUrl);
 
       if (!response.ok) {
@@ -72,36 +52,33 @@ export default function BtnGerarApp({
       }
 
       const blob = await response.blob();
+      const url = URL.createObjectURL(blob);
 
-      if (handlePromise) {
-        const handle = await handlePromise;
-        const writable = await handle.createWritable();
+      const link = document.createElement("a");
+      link.href = url;
+      const nomeCliente = client
+        .trim()
+        .replace(/[<>:"/\\|?*\x00-\x1F]/g, "")
+        .replace(/[. ]+$/g, "");
 
-        await writable.write(blob);
-        await writable.close();
+      link.download = `EdTech ${nomeCliente || "Aplicativo"}.html`;
 
-        setMensagem("Arquivo salvo com sucesso!");
-      } else {
-        const url = URL.createObjectURL(blob);
-        const link = document.createElement("a");
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
 
-        link.href = url;
-        link.download = "EdTech.html";
-        link.click();
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
 
-        setTimeout(() => URL.revokeObjectURL(url), 1000);
-        setMensagem("Download iniciado!");
-      }
+      setMensagem("Download iniciado!");
     } catch (error) {
-      if (error instanceof Error && error.name === "AbortError") return;
-
       setMensagem(
         error instanceof Error
           ? error.message
-          : "Erro ao salvar o arquivo."
+          : "Erro ao baixar o arquivo."
       );
     }
   };
+
 
 
 
@@ -121,6 +98,7 @@ export default function BtnGerarApp({
         body: JSON.stringify({
           client: client.trim(),
           conteudos,
+          code: codigoLicenca,
         }),
       });
 
@@ -155,18 +133,41 @@ export default function BtnGerarApp({
         if (
           statusData.status === "completed"
         ) {
-          if (statusData.conclusion === "success") {
-            setMensagem("Arquivo gerado com sucesso!");
 
+
+          if (statusData.conclusion === "success") {
             const url = `/api/build/download?generationId=${encodeURIComponent(id)}`;
 
-            console.log("Link de download:", url);
             setDownloadUrl(url);
+
+            const saldo = statusData.saldo;
+
+            if (
+              saldo &&
+              typeof saldo.available === "number" &&
+              typeof saldo.max_generations === "number"
+            ) {
+              onSaldoAtualizado(
+                saldo.available,
+                saldo.max_generations
+              );
+
+              setMensagem(
+                saldo.available === 0
+                  ? "Arquivo gerado com sucesso! Você utilizou todas as gerações disponíveis."
+                  : "Arquivo gerado com sucesso!"
+              );
+            } else {
+              setMensagem(
+                "Arquivo gerado com sucesso, mas não foi possível confirmar o saldo."
+              );
+            }
           } else {
-            setMensagem("O salvamento do arquivo falhou.");
+            setMensagem("A geração do arquivo falhou.");
           }
 
           return;
+
         }
 
         setMensagem(
@@ -209,7 +210,7 @@ export default function BtnGerarApp({
         </p>
       )} */}
 
-{downloadUrl && (
+      {/* {downloadUrl && (
   <a
     href={`https://wa.me/5593991878598?text=${encodeURIComponent(
     `Olá, sou ${client}! Meu aplicativo EdTechPalavras foi gerado. Gostaria de receber o arquivo.`
@@ -220,7 +221,7 @@ export default function BtnGerarApp({
   >
     Solicitar arquivo
   </a>
-)}
+)} */}
 
 
       {mensagem && (
@@ -230,7 +231,7 @@ export default function BtnGerarApp({
       )}
 
 
-{/* 
+
       {downloadUrl && (
         <button
           type="button"
@@ -238,9 +239,9 @@ export default function BtnGerarApp({
           className="inline-flex items-center justify-center gap-2 rounded-xl bg-green-600 px-6 py-3 text-sm font-semibold text-white shadow-md shadow-green-600/20 transition-all duration-200 hover:-translate-y-0.5 hover:bg-green-700 hover:shadow-lg hover:shadow-green-700/25 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-500 focus-visible:ring-offset-2 active:translate-y-0"
         >
 
-          Salvar HTML
+          Salvar Arquivo
         </button>
-      )} */}
+      )}
 
 
 

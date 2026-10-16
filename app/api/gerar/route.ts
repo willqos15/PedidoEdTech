@@ -43,16 +43,18 @@ Regras:
 * Não coloque explicações antes ou depois do JSON.
 * "titulo" deve ser um título relacionado ao tema solicitado.
 * "frases" deve ser um array com palavras relacionadas ao tema.
+
 * Cada objeto de "frases" deve possuir obrigatoriamente "palavra", "dica" e "tema".
 * "palavra" deve ser uma palavra adequada ao tema.
 * "palavra" com no máximo 18 letras.
+* "palavra" é permitido usar espaço para separação
 * "dica" deve ajudar o jogador a descobrir a palavra sem revelar diretamente a resposta.
 * "tema" deve indicar o assunto ao qual a palavra pertence.
 * Todos os campos devem ser strings não vazias.
+* * idioma: Português Brasil
 * Gere 25 frases.
 * "título" com no máximo 2 palavras.
-* Não repeta palavras.
-
+* Não repita palavras.
 * Use palavras adequadas ao nível escolar informado pelo usuário.
 
 Tema solicitado pelo usuário: {{ prompt }}`,
