@@ -16,6 +16,14 @@ export async function POST(request: Request) {
       );
     }
 
+    const wordCount = conteudos.reduce((total, conteudo) => {
+      if (!Array.isArray(conteudo?.frases)) {
+        return total;
+      }
+
+      return total + conteudo.frases.length;
+    }, 0);
+
     if (typeof code !== "string" || !code.trim()) {
       return NextResponse.json(
         { error: "Informe uma licença válida." },
@@ -39,6 +47,7 @@ export async function POST(request: Request) {
     // 1. Reservar um crédito no Worker.
     const reserva = await chamarWorker("/generations/reserve", {
       code: code.trim(),
+      word_count: wordCount,
     });
 
     if (

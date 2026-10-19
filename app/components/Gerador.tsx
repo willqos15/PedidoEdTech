@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import InputContext from "../components/InputContext";
 import Resultado from "../components/Resultado";
 import { Frase } from "@/lib/types";
@@ -21,11 +21,15 @@ type Tdata = {
 interface GeradorProps {
   codigoLicenca: string;
   onSaldoAtualizado: (disponiveis: number, total: number) => void;
+  limite: number;
+  onPalavrasUsadas: (palavras: string[]) => void;
 }
 
 export default function Gerador({
   codigoLicenca,
   onSaldoAtualizado,
+  limite,
+  onPalavrasUsadas
 }: GeradorProps) {
   const [conteudos, setConteudos] = useState<Tdata[]>([
     {
@@ -36,6 +40,27 @@ export default function Gerador({
 
   const [abertos, setAbertos] = useState<boolean[]>([true]);
   const [client, setClient] = useState("");
+
+
+
+  const palavrasUsadas = conteudos.reduce(
+    (total, conteudo) =>
+      total +
+      conteudo.frases.filter(
+        (frase) => frase.palavra.trim() !== ""
+      ).length,
+    0
+  );
+
+  useEffect(() => {
+    const palavras = conteudos.flatMap((conteudo) =>
+      conteudo.frases
+        .map((frase) => frase.palavra.trim())
+        .filter((palavra) => palavra !== "")
+    );
+
+    onPalavrasUsadas(palavras);
+  }, [conteudos, onPalavrasUsadas]);
 
   function alterarConteudo(
     index: number,
@@ -120,27 +145,27 @@ export default function Gerador({
     <main className="mx-auto w-full max-w-4xl px-4 py-8 sm:px-6 lg:py-12">
       <div className="space-y-6">
 
-<div className="rounded-xl border border-zinc-200 bg-white p-5">
-  <label
-    htmlFor="client"
-    className="mb-2 block text-sm font-semibold text-zinc-900"
-  >
-    Digite seu nome completo
-  </label>
+        <div className="rounded-xl border border-zinc-200 bg-white p-5">
+          <label
+            htmlFor="client"
+            className="mb-2 block text-sm font-semibold text-zinc-900"
+          >
+            Digite seu nome completo
+          </label>
 
-  <input
-    id="client"
-    type="text"
-    value={client}
-    onChange={(e) => setClient(e.target.value)}
-    placeholder="Ex.: João Faria da Silva"
-    className="w-full rounded-lg border border-zinc-300 px-3 py-2.5 text-sm outline-none transition focus:border-zinc-500 focus:ring-2 focus:ring-zinc-200"
-  />
+          <input
+            id="client"
+            type="text"
+            value={client}
+            onChange={(e) => setClient(e.target.value)}
+            placeholder="Ex.: João Faria da Silva"
+            className="w-full rounded-lg border border-zinc-300 px-3 py-2.5 text-sm outline-none transition focus:border-zinc-500 focus:ring-2 focus:ring-zinc-200"
+          />
 
-  <p className="mt-2 text-xs text-zinc-500">
-    Esse nome será exibido no aplicativo gerado.
-  </p>
-</div>
+          <p className="mt-2 text-xs text-zinc-500">
+            Esse nome será exibido no aplicativo gerado.
+          </p>
+        </div>
 
         {conteudos.map((conteudo, index) => (
           <section
@@ -234,6 +259,9 @@ export default function Gerador({
 
                 <Resultado
                   titulo={conteudo.titulo}
+                  limite={limite - palavrasUsadas + conteudo.frases.filter(
+                    (frase) => frase.palavra.trim() !== ""
+                  ).length}
                   setTitulo={(novoTitulo) => {
                     setConteudos((atuais) =>
                       atuais.map((item, i) =>
@@ -274,24 +302,35 @@ export default function Gerador({
           </section>
         ))}
 
-        {/* Adicionar conteúdo */}
-        {/* <div className="flex justify-center border-zinc-200 ">
-          <button
-            type="button"
-            onClick={adicionarConteudo}
-            className="w-full rounded-lg border border-zinc-300 bg-white px-5 py-2.5 text-sm font-medium text-zinc-700 shadow-sm transition hover:bg-zinc-50"
-          >
-            + Adicionar conteúdo
-          </button>
-        </div> */}
+        {palavrasUsadas < limite &&
 
-        
-<BtnGerarApp
-  conteudos={conteudos}
-  client={client}
-  codigoLicenca={codigoLicenca}
-  onSaldoAtualizado={onSaldoAtualizado}
-/>
+          <div className="flex justify-center border-zinc-200 ">
+            <button
+              type="button"
+              onClick={adicionarConteudo}
+              className="w-full rounded-lg border border-zinc-300 bg-white px-5 py-2.5 text-sm font-medium text-zinc-700 shadow-sm transition hover:bg-zinc-50"
+            >
+              + Acrescentar conteúdo
+            </button>
+          </div>
+
+        }
+
+
+
+
+
+        <BtnGerarApp
+          conteudos={conteudos}
+          client={client}
+          palavrasUsadas={palavrasUsadas}
+          limite={limite}
+          disabled={!client.trim() ||
+            palavrasUsadas < 1 ||
+            palavrasUsadas > limite}
+          codigoLicenca={codigoLicenca}
+          onSaldoAtualizado={onSaldoAtualizado}
+        />
 
 
         {/* Visualização do Tdata[] */}

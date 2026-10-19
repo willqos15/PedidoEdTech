@@ -1,14 +1,11 @@
 
 "use client";
 
+import { LicencaInfo } from "@/lib/types";
 import { useState, type FormEvent } from "react";
 
 
-interface LicencaInfo {
-  codigo: string;
-  disponiveis: number;
-  total: number;
-}
+
 
 interface TelaLicencaProps {
   onValidar: (licenca: LicencaInfo) => void;
@@ -60,6 +57,7 @@ onValidar({
   codigo: codigoLimpo,
   disponiveis: data.available,
   total: data.max_generations,
+  limitePalavra: data.max_words_per_generation,
 });
 
     } catch (error) {
