@@ -22,6 +22,7 @@ interface GerarAplicativoProps {
   client: string;
   codigoLicenca: string;
   onSaldoAtualizado: (disponiveis: number, total: number) => void;
+  disabled: boolean;
 }
 
 
@@ -31,6 +32,7 @@ export default function BtnGerarApp({
   client,
   codigoLicenca,
   onSaldoAtualizado,
+  disabled
 }: GerarAplicativoProps) {
 
   const [carregando, setCarregando] = useState(false);
@@ -197,7 +199,7 @@ export default function BtnGerarApp({
       <button
         type="button"
         onClick={gerarAplicativo}
-        disabled={carregando}
+        disabled={carregando || disabled}
         className="rounded-lg w-full bg-zinc-900 px-5 py-2.5 text-sm font-medium text-white transition hover:bg-zinc-800 disabled:cursor-not-allowed disabled:opacity-50"
       >
         {carregando ? "Iniciando geração..." : "Gerar aplicativo"}
@@ -223,6 +225,11 @@ export default function BtnGerarApp({
   </a>
 )} */}
 
+      {disabled && (
+        <p role="status" className="text-center text-sm text-red-900">
+          Você atingiu o limite de palavras. Apague algumas para poder gerar o arquivo.
+        </p>
+      )}
 
       {mensagem && (
         <p role="status" className="text-center text-sm text-zinc-600">

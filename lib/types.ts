@@ -5,3 +5,10 @@ export interface Frase {
   imagem?: string;
   nomeImagem?: string;
 }
+
+export interface LicencaInfo {
+  codigo: string;
+  disponiveis: number;
+  total: number;
+  limitePalavra: number;
+}

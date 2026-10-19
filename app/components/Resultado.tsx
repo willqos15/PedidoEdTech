@@ -7,6 +7,7 @@ interface ResultadoProps {
   setTitulo: React.Dispatch<React.SetStateAction<string>>;
   frases: Frase[];
   setFrases: React.Dispatch<React.SetStateAction<Frase[]>>;
+  limite: number;
 }
 
 export default function Resultado({
@@ -14,6 +15,7 @@ export default function Resultado({
   setTitulo,
   frases,
   setFrases,
+  limite
 }: ResultadoProps) {
   function alterarFrase(
     index: number,
@@ -103,6 +105,10 @@ export default function Resultado({
 
     reader.readAsDataURL(arquivo);
   }
+
+  const QtdPalavras = frases.filter(
+  (frase) => frase.palavra.trim() !== ""
+).length;
 
   return (
     <section className="mt-8">
@@ -237,7 +243,8 @@ export default function Resultado({
             </div>
           ))}
         </div>
-
+        
+        {QtdPalavras<limite &&
         <div className="border-t border-zinc-200 bg-zinc-50 p-4">
           <button
             type="button"
@@ -247,6 +254,7 @@ export default function Resultado({
             + Adicionar linha
           </button>
         </div>
+        }
       </div>
     </section>
   );
