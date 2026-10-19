@@ -23,6 +23,8 @@ interface GerarAplicativoProps {
   codigoLicenca: string;
   onSaldoAtualizado: (disponiveis: number, total: number) => void;
   disabled: boolean;
+  palavrasUsadas: number;
+  limite: number;
 }
 
 
@@ -32,7 +34,9 @@ export default function BtnGerarApp({
   client,
   codigoLicenca,
   onSaldoAtualizado,
-  disabled
+  disabled,
+  palavrasUsadas,
+  limite
 }: GerarAplicativoProps) {
 
   const [carregando, setCarregando] = useState(false);
@@ -225,9 +229,16 @@ export default function BtnGerarApp({
   </a>
 )} */}
 
-      {disabled && (
+      {palavrasUsadas > limite && (
         <p role="status" className="text-center text-sm text-red-900">
           Você atingiu o limite de palavras. Apague algumas para poder gerar o arquivo.
+        </p>
+      )}
+
+
+      {client.length==0 && (
+        <p role="status" className="text-center text-sm text-red-900">
+          Insira o seu nome
         </p>
       )}
 

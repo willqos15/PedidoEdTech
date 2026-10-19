@@ -41,7 +41,7 @@ export default function Gerador({
   const [abertos, setAbertos] = useState<boolean[]>([true]);
   const [client, setClient] = useState("");
 
-  
+
 
   const palavrasUsadas = conteudos.reduce(
     (total, conteudo) =>
@@ -53,14 +53,14 @@ export default function Gerador({
   );
 
   useEffect(() => {
-  const palavras = conteudos.flatMap((conteudo) =>
-    conteudo.frases
-      .map((frase) => frase.palavra.trim())
-      .filter((palavra) => palavra !== "")
-  );
+    const palavras = conteudos.flatMap((conteudo) =>
+      conteudo.frases
+        .map((frase) => frase.palavra.trim())
+        .filter((palavra) => palavra !== "")
+    );
 
-  onPalavrasUsadas(palavras);
-}, [conteudos, onPalavrasUsadas]);
+    onPalavrasUsadas(palavras);
+  }, [conteudos, onPalavrasUsadas]);
 
   function alterarConteudo(
     index: number,
@@ -323,7 +323,11 @@ export default function Gerador({
         <BtnGerarApp
           conteudos={conteudos}
           client={client}
-          disabled={palavrasUsadas > limite}
+          palavrasUsadas={palavrasUsadas}
+          limite={limite}
+          disabled={!client.trim() ||
+            palavrasUsadas < 1 ||
+            palavrasUsadas > limite}
           codigoLicenca={codigoLicenca}
           onSaldoAtualizado={onSaldoAtualizado}
         />
