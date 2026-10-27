@@ -1,6 +1,27 @@
 
 import { NextResponse } from "next/server";
 
+const PLANOS = {
+  basico: {
+    nome: "Plano Básico",
+    preco: 40,
+    maxGenerations: 1,
+    maxWordsPerGeneration: 15,
+  },
+  medio: {
+    nome: "Plano Médio",
+    preco: 70,
+    maxGenerations: 2,
+    maxWordsPerGeneration: 40,
+  },
+  premium: {
+    nome: "Plano Premium",
+    preco: 120,
+    maxGenerations: 5,
+    maxWordsPerGeneration: 100,
+  },
+} as const;
+
 export async function POST(request: Request) {
 
   let externalReference: string | null = null;
@@ -15,20 +36,20 @@ export async function POST(request: Request) {
 
     const body = await request.json();
 
-const email =
-  typeof body.email === "string"
-    ? body.email.trim().toLowerCase()
-    : "";
+    const email =
+      typeof body.email === "string"
+        ? body.email.trim().toLowerCase()
+        : "";
 
-if (
-  email.length > 254 ||
-  !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)
-) {
-  return NextResponse.json(
-    { error: "Informe um e-mail válido." },
-    { status: 400 }
-  );
-}
+    if (
+      email.length > 254 ||
+      !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)
+    ) {
+      return NextResponse.json(
+        { error: "Informe um e-mail válido." },
+        { status: 400 }
+      );
+    }
 
 
 
@@ -39,7 +60,19 @@ if (
       );
     }
 
+    const planId = body.planId;
 
+    if (
+      typeof planId !== "string" ||
+      !Object.hasOwn(PLANOS, planId)
+    ) {
+      return NextResponse.json(
+        { error: "Selecione um plano válido." },
+        { status: 400 }
+      );
+    }
+
+    const plano = PLANOS[planId as keyof typeof PLANOS];
 
     externalReference = crypto.randomUUID();
 
@@ -54,6 +87,7 @@ if (
         body: JSON.stringify({
           external_reference: externalReference,
           email,
+          amount: Math.round(plano.preco * 100),
         }),
       }
     );
@@ -76,16 +110,18 @@ if (
         body: JSON.stringify({
           items: [
             {
-              id: "licenca-edtechpalavras",
-              title: "Licença EdTechPalavras",
-              description: "Licença de uso do EdTechPalavras",
+              id: `licenca-edtechpalavras-${planId}`,
+              title: plano.nome,
+              description:
+                `${plano.maxGenerations} aplicativo(s), ` +
+                `até ${plano.maxWordsPerGeneration} palavras por aplicativo`,
               quantity: 1,
               currency_id: "BRL",
-              unit_price: 40,
+              unit_price: plano.preco,
             },
           ],
 
-       
+
 
           external_reference: externalReference,
 
