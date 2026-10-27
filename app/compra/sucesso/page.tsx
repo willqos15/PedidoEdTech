@@ -122,7 +122,7 @@ export default function CompraSucesso() {
 
           <div className="w-full rounded-lg border p-5">
             <p className="mb-2 text-sm">
-              Código da licença — 1 geração
+              Código da licença
             </p>
 
             <p className="break-all text-xl font-bold">
